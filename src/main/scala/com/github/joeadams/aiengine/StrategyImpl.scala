@@ -92,10 +92,8 @@ import scala.concurrent.Future
       val movesNeverTried: Map[Int, Double] =movesAsNumbers.filter(m=> !previousMoves.contains(m)).map(moveNumber=>moveNumber->0.toDouble).toMap
       val allMoves: Map[Int, Double] =(previousWinScores ++ movesNeverTried).filterKeys(movesAsNumbers)
       val bestMoveRating=allMoves.values.max
-      if (bestMoveRating>=0){
-        val bestMovesById: Set[Int] =allMoves.filter({case(move:Int,rating:Double)=>rating==bestMoveRating}).keySet
-        BestMovesOnBoard(bestMovesById,boardAsANumber)
-      }
+      val bestMovesById: Set[Int] =allMoves.filter({case(move:Int,rating:Double)=>rating==bestMoveRating}).keySet
+      BestMovesOnBoard(bestMovesById,boardAsANumber)
 
     }
 
