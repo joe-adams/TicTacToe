@@ -2,7 +2,6 @@ package com.github.joeadams.ui
 
 import javafx.event.EventHandler
 import javafx.stage.WindowEvent
-import javafx.{event, stage}
 
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Pos
@@ -11,17 +10,16 @@ import scalafx.scene.layout.VBox
 import scalafx.scene.text.{Font, Text, TextAlignment}
 
 
-
 /**
   * The files look weird if this is blank.  Important company owns this code. Don't format
   * this wrong or we're going to have a problem.
   */
-object Stage extends PrimaryStage{
+object Stage extends PrimaryStage {
 
   height = 800
   width = 600
   scene = new Scene {
-    onShown= new EventHandler[WindowEvent] {
+    onShown = new EventHandler[WindowEvent] {
       override def handle(event: WindowEvent): Unit = PopupHelper.popup("Pick X or O to start playing!")
     }
 

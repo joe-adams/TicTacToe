@@ -1,6 +1,5 @@
 package com.github.joeadams.ui
 
-import scala.concurrent.Future
 import scalafx.Includes._
 import scalafx.event.ActionEvent
 import scalafx.geometry.{Insets, Pos}
@@ -9,7 +8,6 @@ import scalafx.scene.layout.{BorderPane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Rectangle
 import scalafx.stage.Popup
-import scala.concurrent.ExecutionContext.Implicits.global
 
 
 /**
@@ -18,10 +16,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 object PopupHelper {
   def popup(popupText: String) = {
-    val p=new Popup {
+    val p = new Popup {
 
-    inner =>
-      autoHide=true
+      inner =>
+      autoHide = true
       content.add(new StackPane {
         children = List(
           new Rectangle {
@@ -49,10 +47,10 @@ object PopupHelper {
         )
       }.delegate
       )
-  }
+    }
     p.show(Stage)
 
-}
+  }
 
 }
 
