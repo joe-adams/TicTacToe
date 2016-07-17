@@ -4,7 +4,7 @@ import com.github.joeadams.game.GameSetter
 import com.github.joeadams.model.{Coordinate, StatefulSquareImpl}
 import com.github.joeadams.state.SquareState
 import com.github.joeadams.ui.Board
-import com.github.joeadams.aiengine.StrategyImpl
+import com.github.joeadams.aiengine.{Strategy, StrategyImpl}
 import com.github.joeadams.persistance.service.Util
 import com.github.joeadams.persistance.storage.{GamePersistence, MovePersistence}
 import com.github.joeadams.ui.PopupHelper._
@@ -41,7 +41,7 @@ object ImportantValuesImpl extends ImportantValues{
   private val individualClickObservables: Iterable[Observable[Coordinate]] =allStatefulSquaresMap.values.map(_.clickObservable)
   override def clickListener =Observable.from(individualClickObservables).flatten
 
-  override def strategy=StrategyImpl
+  override def getOpponent(gameId:Long)=new StrategyImpl(gameId)
   override def initialize={
     GameSetter.startObserving()
     GamePersistence.loadGames()

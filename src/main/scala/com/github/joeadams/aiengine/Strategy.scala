@@ -6,6 +6,7 @@ import com.github.joeadams.Cases
 import Cases.SquareMarking
 import com.github.joeadams.model.Coordinate
 import Cases._
+import com.github.joeadams.persistance.service.Board
 
 import scala.util.Random
 
@@ -14,7 +15,7 @@ import scala.util.Random
   * this wrong or we're going to have a problem.
   */
 trait Strategy {
-  def move(gameId:Long,computerIs:X_OR_O,board:Map[Coordinate, SquareMarking],playerMove:Option[Coordinate]):Coordinate
+  def move(board:Board):Coordinate
 
   def processGameOutcome(id:Long,computerIs:X_OR_O,outcome:GameOutcome,numberOfMoves:Int): Unit
 

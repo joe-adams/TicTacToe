@@ -16,7 +16,7 @@ trait ImportantValues {
   def coordinatesById: Map[Int,Coordinate]
   def allStatefulSquaresMap: Map[Coordinate, StatefulSquareImpl]
   def clickListener: Observable[Coordinate]
-  def strategy:Strategy
+  def getOpponent(gameId:Long):Strategy
   def initialize:Unit
   def log(l:String):Unit
 

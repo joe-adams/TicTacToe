@@ -28,8 +28,15 @@ object BoardAsNumber {
   }
 
   def getSquareFromNumber(id:Int,boardNumber:Int):SquareMarking={
-    val reduced=boardNumber-threePowers(id+1)
+    /*val reduced= if(boardNumber>threePowers(id+1)){
+      (boardNumber % threePowers(id + 1))
+    } else {
+      boardNumber
+    }
     val i: Int =reduced%threePowers(id)
+    intAsSquareMarking(i)*/
+    val reduced:Int=boardNumber/threePowers(id)
+    val i=reduced%3
     intAsSquareMarking(i)
   }
 

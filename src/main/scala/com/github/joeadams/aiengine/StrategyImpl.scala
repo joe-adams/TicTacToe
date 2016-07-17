@@ -3,132 +3,109 @@ package com.github.joeadams.aiengine
 import com.github.joeadams.Cases._
 import com.github.joeadams.model.Coordinate
 import com.github.joeadams.persistance.service.BoardTransforms._
-import com.github.joeadams.persistance.service.{BoardAsNumber, BoardTransforms, PersistRawGameRecord, RawGameRecords}
+import com.github.joeadams.persistance.service._
 import com.github.joeadams.persistance.storage.{Game, GamePersistence, Move, MovePersistence}
 import com.github.joeadams.TicTacToe.TTT
+
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
-
 import scala.concurrent.Future
 
 /*
   * The files look weird if this is blank.  Important company owns this code. Don't format
   * this wrong or we're going to have a problem.
   */
-object StrategyImpl  extends Strategy{
+  case class StrategyImpl(gameId:Long) extends Strategy{
 
-  override def move(id:Long,computerIs:X_OR_O, board:Map[Coordinate, SquareMarking],playerMove:Option[Coordinate]):Coordinate={
-    val newStrategyForGame=if (strategyForGame.id==id)
-      strategyForGame
-    else
-      new StrategyForGame(id)
-    strategyForGame=newStrategyForGame
-
-    strategyForGame.move(computerIs,board,playerMove)
-  }
-
-  override def processGameOutcome(id:Long,computerIs:X_OR_O,outcome:GameOutcome,numberOfMoves:Int) =Future{
-    strategyForGame.processGameOutcome(id,computerIs,outcome,numberOfMoves)
-  }
-
-  override def processGameQuit(id:Long): Unit={}
-
-  var strategyForGame=StrategyForGame(0)
+  private val moveList= ListBuffer.empty[Move]
 
 
-
-
-
-
-  case class StrategyForGame(id:Long){
-    val allTransforms=BoardTransforms.getAllTransforms
-
-    var availableTransforms=BoardTransforms.getAllTransforms
-
-    def setAvailableTransforms(a:Seq[Transform]): Unit ={
-      availableTransforms=a
-    }
+    case class BestMovesOnBoard(bestMoveNumbers:Set[Int],boardNumber:Int)
+    case class MoveResult(actualMove:Coordinate,recordedMove:Move)
 
     def processGameOutcome(id:Long,computerIs:X_OR_O,outcome:GameOutcome,numberOfMoves:Int): Unit ={
-      val rawrecord=RawGameRecords.processOutcome(id,computerIs,outcome,numberOfMoves,availableTransforms.head)
-      PersistRawGameRecord.persist(rawrecord)
+      val game=Game(gameId,computerIs,outcome,numberOfMoves)
+      GamePersistence.addGame(game)
+      MovePersistence.addMoves(moveList)
+
     }
 
 
 
-    def move(computerIs:X_OR_O,board:Map[Coordinate,SquareMarking],playerMove:Option[Coordinate]):Coordinate={
-
-
-      val boardAsNumber=BoardAsNumber.numberForBoard(board)
-      val move=findMove(computerIs,board,playerMove)
-      val moveAsNumber=move.uniqueId
-
-      RawGameRecords.addMove(id,computerIs,board,move)
-      move
+    def move(board:Board):Coordinate={
+      val moveResult=findMove(board)
+      moveList+=moveResult.recordedMove
+      moveResult.actualMove
     }
 
-    def findMove(computerIs:X_OR_O,board:Map[Coordinate,SquareMarking],playerMove:Option[Coordinate]):Coordinate= {
-      if (availableTransforms.size > 1 && playerMove.isDefined) {
-        val coordinate = playerMove.get
-        setAvailableTransforms(BoardTransforms.minimumTransposesForCoordinate(coordinate, availableTransforms))
-      }
+    private def findMove(board:Board):MoveResult= {
       val rawAvailableMoves: Set[Coordinate] = board.filter({ case (c: Coordinate, s: SquareMarking) => s == blank }).map(t => t._1).toSet
-      if (availableTransforms.size == 1) {
-        lookupBasedOnOneTranspose(rawAvailableMoves, board, availableTransforms.head)
+      val boardTransforms=minimumBoardRepresentations(board)
+      if (boardTransforms.transforms.size==1){
+        lookupBasedOnOneTranspose(rawAvailableMoves,board,boardTransforms.transforms.head)
       } else {
-        val myMove = lookupBasedOnOneManyTransposes(rawAvailableMoves, board, availableTransforms)
-        setAvailableTransforms(BoardTransforms.minimumTransposesForCoordinate(myMove, availableTransforms))
-        myMove
+        lookupBasedOnOneManyTransposes(rawAvailableMoves, board, boardTransforms.transforms)
       }
     }
 
-    def lookupBasedOnOneTranspose(unTransposedMoves:Set[Coordinate],unTransposedBoard:Map[Coordinate, SquareMarking],transpose:Transform):Coordinate={
+    private def lookupBasedOnOneTranspose(unTransposedMoves:Set[Coordinate],unTransposedBoard:Map[Coordinate, SquareMarking],transpose:Transform):MoveResult={
       val board=BoardTransforms.transposeBoard(transpose,unTransposedBoard)
       val moves=unTransposedMoves.map(transposeCoordinate(_,transpose))
       val boardAsNumber=BoardAsNumber.numberForBoard(board)
       val movesAsNumbers=moves.map(_.uniqueId)
       val lookedUp=lookupFromHistory(boardAsNumber,movesAsNumbers)
-      val chosenMove=pickOneRandomly(lookedUp.toSeq)
-      val toCoordinates=TTT.coordinatesById(chosenMove)
-      BoardTransforms.transposeCoordinate(toCoordinates,transpose)
+      val chosenMoveAsNumber=pickOneRandomly(lookedUp.bestMoveNumbers.toSeq)
+      val toCoordinatesButStillTransposed=TTT.coordinatesById(chosenMoveAsNumber)
+      val actualMove=BoardTransforms.reverseTransform(toCoordinatesButStillTransposed,transpose)
+      val recoredMove=Move(gameId,boardAsNumber,chosenMoveAsNumber)
+      MoveResult(actualMove,recoredMove)
     }
 
-    def lookupBasedOnOneManyTransposes(unTransposedMoves:Set[Coordinate],unTransposedBoard:Map[Coordinate, SquareMarking],transposes:Seq[Transform]):Coordinate={
-      val transposeWeAreUsing=pickOneRandomly(transposes.toSeq)
+    private def lookupBasedOnOneManyTransposes(unTransposedMoves:Set[Coordinate],unTransposedBoard:Map[Coordinate, SquareMarking],transposes:Seq[Transform]):MoveResult={
+      val transposeWeAreUsing=pickOneRandomly(transposes)
       val transposedMoves=unTransposedMoves.map(transposeCoordinate(_,transposeWeAreUsing))
       val filteredMoves =filterMovesBaseOnSymmetry(transposedMoves,transposes)
 
       val board=BoardTransforms.transposeBoard(transposeWeAreUsing,unTransposedBoard)
       val boardAsNumber=BoardAsNumber.numberForBoard(board)
       val movesAsNumbers=filteredMoves.map(_.uniqueId)
-      val lookedUp: Set[Int] =lookupFromHistory(boardAsNumber,movesAsNumbers)
-      val chosenMove=pickOneRandomly(lookedUp.toSeq)
-      val toCoordinates=TTT.coordinatesById(chosenMove)
-      BoardTransforms.transposeCoordinate(toCoordinates,transposeWeAreUsing)
+      TTT.log(s"To look up move.  Board as number: $boardAsNumber")
+      TTT.log(s"To look up move.  Moves as numbers: $movesAsNumbers")
+      TTT.log(s"Transposes: $transposes")
+      TTT.log(s"transposedMoves: $transposedMoves")
+      val lookedUp: BestMovesOnBoard =lookupFromHistory(boardAsNumber,movesAsNumbers)
+      val chosenMoveAsNumber=pickOneRandomly(lookedUp.bestMoveNumbers.toSeq)
+      val toCoordinatesButStillTransposed=TTT.coordinatesById(chosenMoveAsNumber)
+      val actualMove=BoardTransforms.reverseTransform(toCoordinatesButStillTransposed,transposeWeAreUsing)
+      val recoredMove=Move(gameId,boardAsNumber,chosenMoveAsNumber)
+      MoveResult(actualMove,recoredMove)
     }
 
-    def lookupFromHistory(boardAsANumber:Int,movesAsNumbers:Set[Int]):Set[Int]={
+    private def lookupFromHistory(boardAsANumber:Int,movesAsNumbers:Set[Int]):BestMovesOnBoard={
       if (movesAsNumbers.size==0) throw new IllegalStateException
       val previousMoves: Map[Int, Seq[Move]] =MovePersistence.getMoves().filter(move=>move.boardPosition==boardAsANumber).groupBy(move=>move.moveTaken)
       if (previousMoves.size==0){
-        return movesAsNumbers
+        return BestMovesOnBoard(movesAsNumbers,boardAsANumber)
       }
       val previousWinScores:Map[Int,Double]=previousMoves.mapValues(turnMovesSequenceIntoScoreAverage)
       val movesNeverTried: Map[Int, Double] =movesAsNumbers.filter(m=> !previousMoves.contains(m)).map(moveNumber=>moveNumber->0.toDouble).toMap
       val allMoves: Map[Int, Double] =(previousWinScores ++ movesNeverTried).filterKeys(movesAsNumbers)
       val bestMoveRating=allMoves.values.max
-      val bestMovesById=allMoves.filter({case(move:Int,rating:Double)=>rating==bestMoveRating}).keySet
-      bestMovesById
+      if (bestMoveRating>=0){
+        val bestMovesById: Set[Int] =allMoves.filter({case(move:Int,rating:Double)=>rating==bestMoveRating}).keySet
+        BestMovesOnBoard(bestMovesById,boardAsANumber)
+      }
+
     }
 
-    def filterMovesBaseOnSymmetry(moves:Set[Coordinate],transposes:Seq[Transform])=moves.filter(move=>{
+    private def filterMovesBaseOnSymmetry(moves:Set[Coordinate],transposes:Seq[Transform])=moves.filter(move=>{
         val min=BoardTransforms.minimallyTransposedCoordinate(move,transposes)
         (move==min||(!moves.contains(min)))
       })
 
 
-    def turnMovesSequenceIntoScoreAverage(moves:Seq[Move])={
+    private def turnMovesSequenceIntoScoreAverage(moves:Seq[Move])={
       val intSeq =moves.flatMap(getGameScoreFromMove(_))
       if (intSeq.isEmpty){
         0.toDouble
@@ -146,6 +123,6 @@ object StrategyImpl  extends Strategy{
       gameOpt.map(game=>game.scoreVal)
     }
 
-  }
-
+  override def processGameQuit(id: Long): Unit = {}
 }
+

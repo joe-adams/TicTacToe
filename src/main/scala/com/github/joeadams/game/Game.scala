@@ -26,6 +26,7 @@ class Game(playerIs: X_OR_O){
 
   private val id: Long =ZonedDateTime.now().toEpochSecond
   private val computerIs=if (playerIs==X) O else X
+  private val computerPlayer=TTT.getOpponent(id)
   private var notOver=true
 
   private val initialBoardPosition =TTT.allCoordinates.map(c=>c->blank).toMap
@@ -58,7 +59,7 @@ class Game(playerIs: X_OR_O){
 
 
   private def handleComputerMove(playerMove:Option[Coordinate]):Unit={
-    val coordinate=TTT.strategy.move(id,computerIs,board.toMap,playerMove)
+    val coordinate=computerPlayer.move(board.toMap)
     moveHandler(computerIs,coordinate)
   }
 
@@ -87,12 +88,12 @@ class Game(playerIs: X_OR_O){
     popup(popupText)
     AreWePlayingState.subject.onNext(no)
     notOver=false
-    TTT.strategy.processGameOutcome(id,computerIs,gameOutcome,numberOfMoves())
+    computerPlayer.processGameOutcome(id,computerIs,gameOutcome,numberOfMoves())
   }
 
   def handleQuitGame()={
     notOver=false
-    TTT.strategy.processGameQuit(id)
+    computerPlayer.processGameQuit(id)
   }
 
   def numberOfMoves():Int= board.values.filter(squareMarking=>squareMarking!=blank).size

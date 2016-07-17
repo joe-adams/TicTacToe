@@ -37,20 +37,16 @@ object MovePersistence {
   private def parse(line:String):Move={
     val split=line.split(Util.separator)
     val gameId=split(0).toInt
-    val moveNumber=split(1).toInt
-    val playedAs=Util.parseXO(split(3))
-    val boardPosition=split(4).toInt
-    val moveTaken=split(5).toInt
-    Move(gameId,moveNumber,playedAs,boardPosition,moveTaken)
+    val boardPosition=split(2).toInt
+    val moveTaken=split(3).toInt
+    Move(gameId,boardPosition,moveTaken)
   }
 
   private def moveToStorageString(move:Move)={
     val gameId=move.gameId.toString
-    val moveNumber=move.moveNumber.toString
-    val playedAs=Util.xoToString(move.playedAs)
     val boardPosition=move.boardPosition.toString
     val moveTaken=move.moveTaken.toString
-    Seq(gameId,moveNumber,playedAs,boardPosition,moveTaken).mkString(Util.separator)
+    Seq(gameId,boardPosition,moveTaken).mkString(Util.separator)
   }
 
   private val fileName="moverecords.txt"
