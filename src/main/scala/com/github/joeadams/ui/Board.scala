@@ -1,7 +1,6 @@
 package com.github.joeadams.ui
 
 
-import com.github.joeadams._
 import com.github.joeadams.service.board.Coordinate
 
 import scalafx.geometry.Insets

@@ -2,7 +2,7 @@ package com.github.joeadams.service.board
 
 import com.github.joeadams.service.{SquareMarking, _}
 import com.github.joeadams.ui.Board
-import rx.lang.scala.{Observable, Subject}
+import rx.lang.scala.Subject
 import rx.lang.scala.subjects.BehaviorSubject
 
 import scalafx.scene.control.Button

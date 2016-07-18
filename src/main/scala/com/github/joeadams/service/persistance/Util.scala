@@ -12,7 +12,7 @@ import scala.io.Source
   */
 object Util {
 
-  def separator = "|"
+  def separator = "_"
 
   def append(filename: String, line: String) = {
     val write = new FileWriter(filename, true)

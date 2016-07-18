@@ -2,8 +2,7 @@ package com.github.joeadams.service.game
 
 import java.time.ZonedDateTime
 
-import com.github.joeadams._
-import com.github.joeadams.service.{board, _}
+import com.github.joeadams.service._
 import com.github.joeadams.service.aiengine.StrategyImpl
 import com.github.joeadams.service.board.{Coordinate, ObserveBoardAsCoordinates, UpdateBoard}
 import com.github.joeadams.ui.PopupHelper.popup
@@ -11,7 +10,6 @@ import rx.lang.scala.Subscription
 
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
-import scala.collection.script.Update
 
 
 /**
@@ -19,15 +17,6 @@ import scala.collection.script.Update
   * this wrong or we're going to have a problem.
   */
 class Game(playerIs: X_OR_O) {
-
-  init()
-
-  def init()={
-    UpdateBoard.clearBoard()
-    if (computerIs == X) {
-      handleComputerMove(Option.empty)
-    }
-  }
 
   private val id: Long = ZonedDateTime.now().toEpochSecond
   private val computerIs = if (playerIs == X) O else X
@@ -63,9 +52,6 @@ class Game(playerIs: X_OR_O) {
     }
   }
 
-  def handleQuitMessage()={
-
-  }
 
   private def handleFinishedGame(gameOutcome: GameOutcome): Unit = {
     subscriptions.foreach(s => s.unsubscribe())
@@ -104,6 +90,15 @@ class Game(playerIs: X_OR_O) {
 
   private def playerWon(p: X_OR_O) = Game.allWinningCombos.exists(squares => playerWonOnASetOfSquares(p, squares))
   private def playerWonOnASetOfSquares(p: X_OR_O, squares: Set[Coordinate]): Boolean = squares.forall(c => board.get(c).get == p)
+
+  def init()={
+    UpdateBoard.clearBoard()
+    if (computerIs == X) {
+      handleComputerMove(Option.empty)
+    }
+  }
+
+  init()
 }
 
 object Game {

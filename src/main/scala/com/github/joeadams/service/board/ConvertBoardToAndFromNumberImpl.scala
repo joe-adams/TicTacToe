@@ -1,6 +1,5 @@
 package com.github.joeadams.service.board
 
-import com.github.joeadams._
 import com.github.joeadams.service._
 
 /**

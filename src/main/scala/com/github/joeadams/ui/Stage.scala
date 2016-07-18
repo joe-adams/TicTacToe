@@ -7,6 +7,7 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Pos
 import scalafx.scene.Scene
 import scalafx.scene.layout.VBox
+import scalafx.scene.paint.Color
 import scalafx.scene.text.{Font, Text, TextAlignment}
 
 
@@ -26,7 +27,8 @@ object Stage extends PrimaryStage {
     root = new VBox() {
       children = Seq(
         new Text() {
-          text = "TIC TAC TOE!"
+          text = "SKYNET TIC TAC TOE"
+          fill=Color.Red
           font = new Font(size = 50)
           textAlignment = TextAlignment.Center
           alignmentInParent = Pos.Center

@@ -2,6 +2,7 @@ package com.github.joeadams.service
 
 import com.github.joeadams.service.board.ObserveBoardAsCoordinates
 import com.github.joeadams.service.game.{AreWePlayingState, Game}
+import com.github.joeadams.service.persistance.{GamePersistence, MovePersistence}
 import com.github.joeadams.service.uiprocessing.ObserveWannaPlayButtons.WannaPlayEnum
 import com.github.joeadams.service.uiprocessing.{ObserveBoard, ObserveWannaPlayButtons, WannaPlayFacade}
 
@@ -30,6 +31,8 @@ object IntializeService {
 
     ObserveBoard.observe()
     ObserveBoardAsCoordinates.observe()
+    GamePersistence.loadGames()
+    MovePersistence.loadMoves()
   }
 
 }

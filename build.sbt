@@ -12,7 +12,9 @@ libraryDependencies  ++= Seq(
 
   "com.netflix.rxjava" % "rxjava-scala" % "0.20.7"  withSources() withJavadoc(),
   // other dependencies here
-  "org.scalanlp" %% "breeze" % "0.12"   withSources() withJavadoc()
+  "org.scalanlp" %% "breeze" % "0.12"   withSources() withJavadoc(),
+
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
 

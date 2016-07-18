@@ -21,7 +21,6 @@ trait BoardTransforms {
 
   def minimumBoardRepresentations(board: Board): BoardWithFlips
 
-  def minimumCoordinateForMove(coordinate: Coordinate,flips:Seq[BoardFlip]):Coordinate
 
 }
 

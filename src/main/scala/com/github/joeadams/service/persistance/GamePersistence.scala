@@ -12,7 +12,7 @@ import scala.collection.mutable
 object GamePersistence {
 
 
-  def allGames() = gameList
+  def getGames() = gameList
 
   def loadGames(): Unit = {
     val file = new File(fileName)
@@ -35,7 +35,7 @@ object GamePersistence {
     val computerAs = Util.xoToString(game.computerAs)
     val outcome = Util.gameOutcomeToString(game.outcome)
     val moves = game.moves.toString
-    val stringToStore = Seq(game.id.toString, computerAs, moves).mkString(Util.separator)
+    val stringToStore = Seq(game.id.toString, computerAs, moves).mkString(Util.separator.toString)
     Util.append(fileName, stringToStore)
   }
 

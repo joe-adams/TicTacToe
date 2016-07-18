@@ -11,7 +11,7 @@ case class Game(id: Long, computerAs: X_OR_O, outcome: GameOutcome, moves: Int) 
     outcome match {
       case outcome: DRAW => 0
       case WonBy(p) => {
-        val absoluteScore = (10 - moves) * (10 - moves)
+        val absoluteScore = (10 - moves)
         if (computerAs == p) {
           absoluteScore
         } else {

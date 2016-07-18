@@ -19,7 +19,6 @@ object MovePersistence {
       moves.foreach(m => {
         moveList += m
       })
-
     }
   }
 
@@ -33,8 +32,8 @@ object MovePersistence {
   private def parse(line: String): Move = {
     val split = line.split(Util.separator)
     val gameId = split(0).toInt
-    val boardPosition = split(2).toInt
-    val moveTaken = split(3).toInt
+    val boardPosition = split(1).toInt
+    val moveTaken = split(2).toInt
     Move(gameId, boardPosition, moveTaken)
   }
 

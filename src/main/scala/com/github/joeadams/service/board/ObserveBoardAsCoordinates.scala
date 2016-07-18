@@ -1,8 +1,6 @@
 package com.github.joeadams.service.board
 
-import com.github.joeadams._
 import com.github.joeadams.service.uiprocessing.ObserveBoard
-import rx.lang.scala.Observable
 
 /**
   * The files look weird if this is blank.  Important company owns this code. Don't format

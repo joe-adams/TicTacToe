@@ -66,6 +66,5 @@ class BoardTransformsImpl(convertBoardToAndFromNumber:ConvertBoardToAndFromNumbe
     BoardWithFlips(minimumBoard, flips)
   }
 
-  override def minimumCoordinateForMove(coordinate: Coordinate, flips: Seq[BoardFlip]): Coordinate = flips.map(flipCoordinate(coordinate,_)).min
 
 }
