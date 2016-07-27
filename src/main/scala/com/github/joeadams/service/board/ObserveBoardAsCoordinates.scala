@@ -9,7 +9,7 @@ import com.github.joeadams.service.uiprocessing.ObserveBoard
 object ObserveBoardAsCoordinates {
 
   def observe()={
-    ObserveBoard.observe().map(i=>Coordinate.fromId(i))
+    ObserveBoard.observe().map(i=>Coordinate.id(i))
   }
 
 }

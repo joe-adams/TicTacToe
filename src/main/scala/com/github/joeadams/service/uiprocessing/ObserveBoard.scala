@@ -1,6 +1,6 @@
 package com.github.joeadams.service.uiprocessing
 
-import com.github.joeadams.ui.Board
+import com.github.joeadams.ui.BoardUI
 import rx.lang.scala.Observable
 
 /**
@@ -9,7 +9,7 @@ import rx.lang.scala.Observable
   */
 object ObserveBoard {
 
-  val board = Board
+  val board = BoardUI
 
   val buttonRange = 0 to board.buttons.size - 1
 

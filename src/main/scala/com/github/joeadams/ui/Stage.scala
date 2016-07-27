@@ -34,7 +34,7 @@ object Stage extends PrimaryStage {
           alignmentInParent = Pos.Center
         },
         WannaPlay,
-        Board
+        BoardUI
       )
     }
   }

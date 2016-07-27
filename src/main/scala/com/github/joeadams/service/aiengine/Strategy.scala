@@ -1,10 +1,9 @@
 package com.github.joeadams.service.aiengine
 
-
 import com.github.joeadams.service._
-import com.github.joeadams.service.board.{Board, Coordinate}
-
-import scala.util.Random
+import com.github.joeadams.service.board.Board.Board
+import com.github.joeadams.service.board.{BoardTransforms, Coordinate}
+import com.github.joeadams.service.dao.{DbAction, GameDbService}
 
 /**
   * The files look weird if this is blank.  Important company owns this code. Don't format
@@ -13,15 +12,11 @@ import scala.util.Random
 trait Strategy {
   def move(board: Board): Coordinate
 
-  def processGameOutcome(id: Long, computerIs: X_OR_O, outcome: GameOutcome, numberOfMoves: Int): Unit
+  def processGameOutcome(id: Long, outcome: GameOutcome, numberOfMoves: Int): Unit
+
+}
+//extends BoardTransforms with ConvertBoardToAndFromNumber with GameDbService with DbAction.Transactor
+object Strategy{
 
 
-  def pickOneRandomly[T](input: Seq[T]): T =
-    if (input.size == 1) {
-      input.head
-    } else {
-      val vector = input.toVector
-      val randomNumber = (new Random).nextInt(vector.size)
-      vector(randomNumber)
-    }
 }

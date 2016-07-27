@@ -1,7 +1,7 @@
 package com.github.joeadams.service.board
 
 import com.github.joeadams.service.{SquareMarking, _}
-import com.github.joeadams.ui.Board
+import com.github.joeadams.ui.BoardUI
 import rx.lang.scala.Subject
 import rx.lang.scala.subjects.BehaviorSubject
 
@@ -22,13 +22,13 @@ object UpdateBoard {
   def clearBoard()=Coordinate.allCoordinates.map(c=>move(c,blank))
 
   updates.subscribe(update=>{
-    val id=update.coordinate.uniqueId
+    val id=update.coordinate.id
     val style=update.marking match {
-      case blank:BLANK=>Board.blankStyle(_:Button)
-      case X=>Board.xStyle(_:Button)
-      case O=>Board.oStyle(_:Button)
+      case blank:BLANK=>BoardUI.blankStyle(_:Button)
+      case X=>BoardUI.xStyle(_:Button)
+      case O=>BoardUI.oStyle(_:Button)
     }
-    Board.updateButton(id,style)
+    BoardUI.updateButton(id,style)
   })
 
 

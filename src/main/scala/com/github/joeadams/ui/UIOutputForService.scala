@@ -16,7 +16,7 @@ trait UIOutputForService {
 
 object UIOutputForService {
   def apply(): UIOutputForService = new UIOutputForService() {
-    val boardButtons = Board.buttons
+    val boardButtons = BoardUI.buttons
     val wannaPlay = WannaPlayFacade()
   }
 }

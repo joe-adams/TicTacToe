@@ -1,6 +1,7 @@
 package com.github.joeadams
 
-import com.github.joeadams.service.persistance.Util
+import java.io.{File, FileWriter}
+import scala.io.Source
 
 
 /**
@@ -9,22 +10,32 @@ import com.github.joeadams.service.persistance.Util
   */
 package object service {
 
-  trait SquareMarking
+  trait SquareMarking{
+    def asInt:Int
+  }
 
   sealed case class BLANK() extends SquareMarking {
-    override def toString = "b"
+    override val toString = "b"
+    override val asInt=0
   }
 
   val blank = BLANK()
 
   trait X_OR_O extends SquareMarking
 
-  val X = new Object() with X_OR_O {
-    override def toString = "X"
-  }
-  val O = new Object() with X_OR_O {
+  sealed case class O_PLAYER() extends X_OR_O{
     override def toString = "O"
+    override val asInt=1
   }
+
+  val O =O_PLAYER()
+
+  sealed case class X_PLAYER() extends X_OR_O{
+    override def toString = "X"
+    override val asInt=2
+  }
+
+  val X = X_PLAYER()
 
   trait AreWePlaying
 
@@ -47,18 +58,35 @@ package object service {
   trait GameOutcome extends MoveOutcome
 
   sealed case class DRAW() extends GameOutcome {
-    override def toString = "draw"
+    override def toString = "d"
   }
 
   val draw = DRAW()
 
   sealed case class QUIT() extends GameOutcome {
-    override def toString = "quit"
+    override def toString = "q"
   }
 
   val quit = QUIT()
 
-  case class WonBy(p: X_OR_O) extends GameOutcome
+  sealed case class COMPUTER_WON() extends GameOutcome {
+    override def toString = "w"
+  }
+
+  val won=COMPUTER_WON()
+
+  sealed case class COMPUTER_LOST() extends GameOutcome {
+    override def toString = "l"
+  }
+
+  val lost=COMPUTER_LOST()
+
+  def stringToGameOutcome(s:String)=s match {
+    case "w"=>won
+    case "l"=>lost
+    case "q"=>quit
+    case _=>draw
+  }
 
   /**
     *
@@ -70,7 +98,21 @@ package object service {
     *
     */
 
-  def log(l: String) = Util.append("log.txt", l)
+  def log(l: String) = append("log.txt", l)
+
+  def append(filename: String, line: String): Unit = {
+    val write = new FileWriter(filename, true)
+    try {
+      write.append(line + "\n")
+    } finally {
+      write.close()
+    }
+  }
+
+  def readFile[O](file: File, lineReader: String => O) = {
+    val source = Source.fromFile(file)
+    source.getLines().toSeq.map(lineReader)
+  }
 
 
 }

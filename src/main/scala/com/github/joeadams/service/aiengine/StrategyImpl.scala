@@ -3,33 +3,40 @@ package com.github.joeadams.service.aiengine
 
 
 import com.github.joeadams.service._
+import com.github.joeadams.service.board.Board._
 import com.github.joeadams.service.board._
-import com.github.joeadams.service.persistance.{Game, GamePersistence, Move, MovePersistence}
+import com.github.joeadams.service.dao.MoveHistory.{HasLossRank, MoveRank}
+import com.github.joeadams.service.dao.Tables._
+import com.github.joeadams.service.dao.{GameDbTransactions, Transactor}
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
+import scala.util.Random
+import scala.language.implicitConversions
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /*
   * The files look weird if this is blank.  Important company owns this code. Don't format
   * this wrong or we're going to have a problem.
   */
-case class StrategyImpl(gameId: Long,
+case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
                         boardTransforms: BoardTransforms=BoardTransforms(),
-                        convertBoardToAndFromNumber: ConvertBoardToAndFromNumber=ConvertBoardToAndFromNumber()) extends Strategy {
+                        gameDbTransactions: GameDbTransactions=GameDbTransactions()) extends Strategy{
+
 
   private val moveList = ListBuffer.empty[Move]
-
-
   case class BestMovesOnBoard(bestMoveNumbers: Set[Int], boardNumber: Int)
 
   case class MoveResult(actualMove: Coordinate, recordedMove: Move)
 
-  def processGameOutcome(id: Long, computerIs: X_OR_O, outcome: GameOutcome, numberOfMoves: Int): Unit = {
+  def processGameOutcome(id: Long, outcome: GameOutcome, numberOfMoves: Int): Unit = {
     if (quit==outcome){
       return
     }
-    val game = Game(gameId, computerIs, outcome, numberOfMoves)
-    GamePersistence.addGame(game)
-    MovePersistence.addMoves(moveList)
+    val f=gameDbTransactions.processGameAtEnd(gameId,outcome,numberOfMoves,moveList)
+    Await.result(f,Duration.Inf)
+
   }
 
 
@@ -40,72 +47,56 @@ case class StrategyImpl(gameId: Long,
   }
 
   private def findMove(board: Board): MoveResult = {
-    val rawAvailableMoves: Set[Coordinate] = board.filter({ case (c: Coordinate, s: SquareMarking) => s == blank }).map(t => t._1).toSet
-    val boardWithFlips = boardTransforms.minimumBoardRepresentations(board)
-    if (boardWithFlips.flips.size == 1) {
-      lookupBasedOnOneFlip(rawAvailableMoves, board, boardWithFlips.flips.head)
-    } else {
-      lookupBasedOnOneManyFlips(rawAvailableMoves, board, boardWithFlips.flips)
+    val moves: Set[Coordinate] = board.kv.filter(_.s==blank).map(_.c).toSet
+    val minBoardsWithMoves: Map[Int, Set[Coordinate]] =moves.groupBy(move=>minBoardAfterMove(board,move))
+    val boards: Set[Int] =minBoardsWithMoves.keySet
+    val setOfFutureTuples: Set[Future[(Int, MoveRank)]] =boards.map(rankMoveKey)
+    val futureSet: Future[Set[(Int, MoveRank)]] =Future.sequence(setOfFutureTuples)
+    val setOfTuples: Set[(Int, MoveRank)] =Await.result(futureSet,Duration.Inf)
+    val optLossRank=optionalLossRankForLastMove(setOfTuples.map(_._2))
+    if (optLossRank.isDefined){
+      addLossRank(Loss(moveList.last.newBoardPosition,optLossRank.get))
     }
+    val boardPicked: Int =setOfTuples.maxBy(_._2)._1
+    val setOfMoves: Set[Coordinate] =minBoardsWithMoves(boardPicked)
+    val moveCoordinate: Coordinate =pickOneRandomly(setOfMoves.toSeq)
+    val moveNumber=10-moves.size
+    val moveRecord=Move(gameId,moveNumber,boardPicked)
+    MoveResult(moveCoordinate,moveRecord)
   }
 
-  private def lookupBasedOnOneFlip(unFlippedMoves: Set[Coordinate], unflippedBoard: Map[Coordinate, SquareMarking], boardFlip: BoardFlip): MoveResult = {
-    val board = boardTransforms.flipBoard(boardFlip, unflippedBoard)
-    val moves = unFlippedMoves.map(boardTransforms.flipCoordinate(_, boardFlip))
-    val boardAsNumber = convertBoardToAndFromNumber.boardToNumber(board)
-    val movesAsNumbers = moves.map(_.uniqueId)
-    val chosenMove: Int = lookupFromHistory(boardAsNumber, movesAsNumbers)
-    val toCoordinatesButStillTransposed = Coordinate.fromId(chosenMove)
-    val actualMove = boardTransforms.reverseFlipCoordinate(toCoordinatesButStillTransposed,boardFlip)
-    val recoredMove = Move(gameId, boardAsNumber, chosenMove)
-    MoveResult(actualMove, recoredMove)
+  private def rankMoveKey(board:Int)= rankMove(board).map(r=>board->r)
+  private def rankMove(board:Int): Future[MoveRank] = gameDbTransactions.checkMove(board).map(_.createMoveRank())
+  private def minBoardAfterMove(board:Board,move:Coordinate): Int = boardTransforms.minimumBoardRepresentations(board + (move->computerIs))
+
+  private def lossRank(moveRank:MoveRank):Option[HasLossRank]=moveRank match{
+    case HasLossRank(a,b)=>Some(HasLossRank(a,b))
+    case _=>None
   }
 
-  private def lookupBasedOnOneManyFlips(unFlippedMoves: Set[Coordinate], unflippedBoard: Board, boardFlips: Seq[BoardFlip]): MoveResult = {
-    val flipWeAreUsing = pickOneRandomly(boardFlips)
-    val flippedMoves=unFlippedMoves.map(boardTransforms.flipCoordinate(_, flipWeAreUsing))
-    val filterdMoves=filterMovesBaseOnSymmetry(flippedMoves,flipWeAreUsing,(boardFlips.toSet-flipWeAreUsing))
-    val boardAsNumber=convertBoardToAndFromNumber.boardToNumber(boardTransforms.flipBoard(flipWeAreUsing, unflippedBoard))
-    val chosenMove=lookupFromHistory(boardAsNumber,filterdMoves.map(_.uniqueId))
-    val toCoordinatesButStillTransposed = Coordinate.fromId(chosenMove)
-    val actualMove = boardTransforms.reverseFlipCoordinate(toCoordinatesButStillTransposed,flipWeAreUsing)
-    val recoredMove = Move(gameId, boardAsNumber, chosenMove)
-    MoveResult(actualMove, recoredMove)
+  private def addLossRank(loss:Loss):Unit={
+    val wait: Future[Int] =gameDbTransactions.registerLosingPathMove(loss)
+    Await.result(wait,Duration.Inf)
   }
 
-  private def lookupFromHistory(boardAsANumber: Int, movesAsNumbers: Set[Int]): Int = {
-    if (movesAsNumbers.size == 0) throw new IllegalStateException
-    val moveList =movesAsNumbers.map(move=>HistoricalMove.makeFromHistory(move,boardAsANumber)).toList
-    val bestMove: HistoricalMove =moveList.max
-    bestMove.moveAsInt
-  }
-
-  private def filterMovesBaseOnSymmetry(moves: Set[Coordinate], flipWeAreUsing:BoardFlip,flipsWeArentUsing:Set[BoardFlip]): Set[Coordinate] =
-    moves.filter((move: Coordinate) => {
-      val alternateCoordinates=flipsWeArentUsing.map((flip)=>boardTransforms.flipCoordinate(move,flip)).filter((coordinate)=>moves.contains(coordinate))
-      val smaller=alternateCoordinates.find(coordinate=>coordinate.uniqueId<move.uniqueId)
-      val f=smaller.isDefined
-      !f
-  })
-
-
-  private def turnMovesSequenceIntoScoreAverage(moves: Seq[Move]) = {
-    val intSeq = moves.flatMap(getGameScoreFromMove(_))
-    if (intSeq.isEmpty) {
-      0.toDouble
-    } else {
-      val size = intSeq.size
-      val sum = intSeq.reduce(_ + _).toDouble
-      val average = sum / size
-      average
+  private def optionalLossRankForLastMove(moves:Set[MoveRank]):Option[Int]={
+    val lossRanksOpt=moves.map(lossRank)
+    if (lossRanksOpt.exists(_==None)) None
+    else{
+      val highestLossRank=lossRanksOpt.map(_.get).map(_.lossRank).max
+      Some(highestLossRank+1)
     }
   }
 
 
-  private def getGameScoreFromMove(move: Move): Option[Int] = {
-    val gameOpt: Option[Game] = GamePersistence.getGames().find(_.id == move.gameId)
-    gameOpt.map(game => game.scoreVal)
-  }
+  private def pickOneRandomly[T](input: Seq[T]): T =
+    if (input.size == 1) {
+      input.head
+    } else {
+      val vector = input.toVector
+      val randomNumber = (new Random).nextInt(vector.size)
+      vector(randomNumber)
+    }
 
 }
 
