@@ -6,6 +6,7 @@ import slick.profile.{FixedSqlAction, FixedSqlStreamingAction}
 import com.github.joeadams.service.dao.Tables._
 import slick.jdbc.meta.MTable
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -29,9 +30,9 @@ trait DbAction {
 
   def addMoves(newMoves: Seq[Move]): Future[Option[Int]]
 
-  def getTables(table:TableQuery[_ <: Table[_]]): Future[Vector[MTable]]
+  def getTables(table: TableQuery[_<:Table[_]]): Future[Vector[MTable]]
 
-  def tableCreate(table:TableQuery[_ <: Table[_]]): Future[Unit]
+  def tableCreate(table:TableQuery[_<:Table[_]]): Future[Unit]
 
 }
 
@@ -52,15 +53,23 @@ trait DbActionWithComponents extends DbAction{
 
   override def addWin(win: Int): Future[Int] = db.run(inner.addWin(win))
 
-  override def getLoss(boardPosition: Int): Future[Option[Int]] = db.run(inner.getLoss(boardPosition))
+   override def getLoss(boardPosition: Int): Future[Option[Int]] = {
+    val l=db.run(inner.getLoss(boardPosition)).map(_.headOption)
+     l.onComplete(f=>println((s"on complete: $f")))
+    println(s"loss is $l")
+    l
+  }
 
   override def getWin(boardPosition: Int): Future[Boolean] = db.run(inner.getWin(boardPosition))
 
   override def addMoves(newMoves: Seq[Move]): Future[Option[Int]] = db.run(inner.addMoves(newMoves))
 
-  override def getTables(table:TableQuery[_ <: Table[_]]): Future[Vector[MTable]] =db.run(inner.getTables(table))
+  override def getTables(table: TableQuery[_<:Table[_]]): Future[Vector[MTable]] ={
 
-  override def tableCreate(table:TableQuery[_ <: Table[_]]) =db.run(table.schema.create)
+    db.run(inner.getTables(table))
+  }
+
+  override def tableCreate(table:TableQuery[_<:Table[_]]): Future[Unit] =db.run(table.schema.create)
 }
 
 

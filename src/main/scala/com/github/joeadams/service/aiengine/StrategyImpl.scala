@@ -9,6 +9,7 @@ import com.github.joeadams.service.dao.MoveHistory.{HasLossRank, MoveRank}
 import com.github.joeadams.service.dao.Tables._
 import com.github.joeadams.service.dao.{GameDbTransactions, Transactor}
 
+import scala.collection.IterableView
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
@@ -35,7 +36,6 @@ case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
       return
     }
     val f=gameDbTransactions.processGameAtEnd(gameId,outcome,numberOfMoves,moveList)
-    Await.result(f,Duration.Inf)
 
   }
 
@@ -50,14 +50,11 @@ case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
     val moves: Set[Coordinate] = board.kv.filter(_.s==blank).map(_.c).toSet
     val minBoardsWithMoves: Map[Int, Set[Coordinate]] =moves.groupBy(move=>minBoardAfterMove(board,move))
     val boards: Set[Int] =minBoardsWithMoves.keySet
-    val setOfFutureTuples: Set[Future[(Int, MoveRank)]] =boards.map(rankMoveKey)
-    val futureSet: Future[Set[(Int, MoveRank)]] =Future.sequence(setOfFutureTuples)
-    val setOfTuples: Set[(Int, MoveRank)] =Await.result(futureSet,Duration.Inf)
-    val optLossRank=optionalLossRankForLastMove(setOfTuples.map(_._2))
-    if (optLossRank.isDefined){
-      addLossRank(Loss(moveList.last.newBoardPosition,optLossRank.get))
-    }
-    val boardPicked: Int =setOfTuples.maxBy(_._2)._1
+    val boardsToRanks: Map[Int, MoveRank] = boards.groupBy(identity).mapValues(_.head).mapValues(rankMove)
+
+    handlePossibleNeedToAddLossRank(boardsToRanks.values.toSeq,moveList.last.newBoardPosition)
+
+    val boardPicked: Int =boardsToRanks.maxBy(_._2)._1
     val setOfMoves: Set[Coordinate] =minBoardsWithMoves(boardPicked)
     val moveCoordinate: Coordinate =pickOneRandomly(setOfMoves.toSeq)
     val moveNumber=10-moves.size
@@ -65,21 +62,25 @@ case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
     MoveResult(moveCoordinate,moveRecord)
   }
 
-  private def rankMoveKey(board:Int)= rankMove(board).map(r=>board->r)
-  private def rankMove(board:Int): Future[MoveRank] = gameDbTransactions.checkMove(board).map(_.createMoveRank())
+  private def rankMove(board:Int)= gameDbTransactions.checkMove(board).createMoveRank()
   private def minBoardAfterMove(board:Board,move:Coordinate): Int = boardTransforms.minimumBoardRepresentations(board + (move->computerIs))
+
+  private def handlePossibleNeedToAddLossRank(moveRanks: Seq[MoveRank],lastBoard:Int)={
+    val lossRankOpt=optionalLossRankForMove(moveRanks)
+    lossRankOpt match {
+      case Some(rank) =>addLossRank(Loss(lastBoard,rank))
+      case None=>()
+    }
+  }
 
   private def lossRank(moveRank:MoveRank):Option[HasLossRank]=moveRank match{
     case HasLossRank(a,b)=>Some(HasLossRank(a,b))
     case _=>None
   }
 
-  private def addLossRank(loss:Loss):Unit={
-    val wait: Future[Int] =gameDbTransactions.registerLosingPathMove(loss)
-    Await.result(wait,Duration.Inf)
-  }
+  private def addLossRank(loss:Loss):Unit=gameDbTransactions.registerLosingPathMove(loss)
 
-  private def optionalLossRankForLastMove(moves:Set[MoveRank]):Option[Int]={
+  private def optionalLossRankForMove(moves:Seq[MoveRank]):Option[Int]={
     val lossRanksOpt=moves.map(lossRank)
     if (lossRanksOpt.exists(_==None)) None
     else{

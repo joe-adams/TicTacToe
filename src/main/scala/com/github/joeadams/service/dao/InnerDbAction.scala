@@ -1,16 +1,11 @@
 package com.github.joeadams.service.dao
 
-
-
 import com.github.joeadams.service.dao.Tables._
 import slick.dbio.Effect._
 import slick.dbio.NoStream
-import slick.profile._
+import slick.profile.{FixedSqlAction, FixedSqlStreamingAction, _}
 import com.github.joeadams.service.dao.slickapi._
 import slick.jdbc.meta.MTable
-import slick.profile.{FixedSqlAction, FixedSqlStreamingAction}
-
-
 
 /**
   * The files look weird if this is blank.  Important company owns this code. Don't format
@@ -19,7 +14,7 @@ import slick.profile.{FixedSqlAction, FixedSqlStreamingAction}
 trait InnerDbAction {
   def getGameMove(boardPosition: Int): FixedSqlStreamingAction[Seq[(Game, Move)], (Game, Move), Read]
 
-  def getLoss(boardPosition: Int): FixedSqlAction[Option[Int], NoStream, Read]
+  def getLoss(boardPosition: Int): FixedSqlStreamingAction[Seq[Int], Int, Read]
 
   def getWin(boardPosition: Int): FixedSqlAction[Boolean, NoStream, Read]
 
@@ -29,7 +24,7 @@ trait InnerDbAction {
 
   def addWin(win: Int): FixedSqlAction[Int, NoStream, Write]
 
-  def addLoss(loss: Loss): FixedSqlAction[Int, NoStream, Write]
+ def addLoss(loss: Loss):  FixedSqlAction[Int, NoStream, Write]
 
   def updateLossIfToLowerLevel(loss: Loss): FixedSqlAction[Int, NoStream, Write]
 
@@ -46,9 +41,10 @@ object InnerDbAction{
   object default extends InnerDbAction{
     override def getGameMove(boardPosition:Int) = games.join(moves).on(_.id === _.gameId).filter(_._2.newBoardPosition===boardPosition).sortBy(_._1.id.desc).result
 
-    override def getLoss(boardPosition:Int)= {
+    override def getLoss(boardPosition:Int) = {
       println("get loss")
-      val l=losses.filter(_.position === boardPosition).map(_.level).min.result
+      val l =losses.filter(_.position === boardPosition).map(_.level).result
+      println(s"loss $l")
       println("got loss")
       l
     }
@@ -61,7 +57,7 @@ object InnerDbAction{
 
     override def addWin(win:Int)=wins+=win
 
-    override def addLoss(loss:Loss)={
+    override def addLoss(loss:Loss) ={
       println("add loss")
       val a=losses+=loss
       println("added")
@@ -77,7 +73,7 @@ object InnerDbAction{
       a
     }
 
-    override def getTables(table:TableQuery[_ <: Table[_]]):BasicStreamingAction[Vector[MTable], MTable, Read]  = MTable.getTables(table.baseTableRow.tableName)
+    override def getTables(table:TableQuery[_ <: Table[_]]) = MTable.getTables(table.baseTableRow.tableName)
 
     override def tableCreate(table:TableQuery[_ <: Table[_]])=table.schema.create
 

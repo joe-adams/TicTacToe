@@ -25,27 +25,32 @@ class GameDBTransactionsTest   extends FunSuite with BeforeAndAfter with ScalaFu
 
 
   ignore("Get positions on no positions"){
+   // ClearData.clear()
     val gameDbTransactions: GameDbTransactions=GameDbTransactions()
-    val moveRank =gameDbTransactions.checkMove(0).futureValue.createMoveRank()
+    val a: Seq[Unit] =gameDbTransactions.ensureAllTables()
+    val moveRank =gameDbTransactions.checkMove(0).createMoveRank()
     assert(moveRank.isInstanceOf[NeverTried])
   }
 
 
   test("register loss"){
+    ClearData.clear()
     val gameDbTransactions: GameDbTransactions=GameDbTransactions()
+    gameDbTransactions.ensureAllTables()
     val loss=Loss(1,1)
-    val s: Int =gameDbTransactions.registerLosingPathMove(loss).futureValue
+    val s: Int =gameDbTransactions.registerLosingPathMove(loss)
     println(s)
 
   }
 
   ignore("process game at end"){
     val gameDbTransactions: GameDbTransactions=GameDbTransactions()
+    val a: Seq[Unit] =gameDbTransactions.ensureAllTables()
     val gameId=2
     val gameOutcome=lost
     val numberOfMoves=5
     val moves=Seq(Move(gameId,1,4),Move(gameId,3,20),Move(gameId,5,100))
-    val s: Future[Seq[Any]] =gameDbTransactions.processGameAtEnd(1,won,5,moves)
+    val s=gameDbTransactions.processGameAtEnd(1,won,5,moves)
 
   }
 }

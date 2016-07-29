@@ -11,5 +11,7 @@ class TestClearData extends FunSuite with BeforeAndAfter with ScalaFutures  {
 
   test("clear data"){
     ClearData.clear()
+
+
   }
 }

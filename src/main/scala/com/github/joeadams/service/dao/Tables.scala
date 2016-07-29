@@ -11,6 +11,8 @@ import com.github.joeadams.service._
   * this wrong or we're going to have a problem.
   */
 object Tables {
+
+
   case class GameMove(game:Game,move:Move)
 
   case class Game(id:Long, outcomeString:String, numberOfMoves:Int){
@@ -48,5 +50,7 @@ object Tables {
     def * : ProvenShape[Int]=(position)
   }
   val wins=TableQuery[Wins]
+
+  val allTheTables:Seq[TableQuery[_<:Table[_]]]=Seq(games,moves,losses,wins)
 
 }
