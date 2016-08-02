@@ -10,10 +10,10 @@ import scala.concurrent.Future
   * this wrong or we're going to have a problem.
   */
 trait GameDbTransactions {
-  def processGameAtEnd(gameId:Long, gameOutcome:GameOutcome, numberOfMoves:Int, moves:Seq[Move]):Future[Seq[Any]]
-  def checkMove(boardPosition:Int): Future[MoveHistory]
-  def registerLosingPathMove(loss:Loss): Future[Int]
-  def ensureAllTables():Future[Seq[Unit]]
+  def processGameAtEnd(gameId:Long, gameOutcome:GameOutcome, numberOfMoves:Int, moves:Seq[Move]):Any
+  def checkMove(boardPosition:Int): MoveHistory
+  def registerLosingPathMove(loss:Loss): Int
+  def ensureAllTables():Any
 }
 
 

@@ -17,8 +17,7 @@ import scala.concurrent.{Await, Future}
   */
 object IntializeService {
   def start() = {
-    val a =GameDbTransactions().ensureAllTables()
-    Await.result(a,Duration.Inf)
+    GameDbTransactions().ensureAllTables()
     Thread.sleep(1000)
     AreWePlayingState.subject.subscribe((areWePlaying: AreWePlaying) => areWePlaying match {
       case no: NO => {

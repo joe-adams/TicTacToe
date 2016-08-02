@@ -28,25 +28,24 @@ class GameDBTransactionsTest   extends FunSuite with BeforeAndAfterAll{
   override def beforeAll={
       DropTables.drop()
       Thread.sleep(5000)
-      Await.result(new TestGameDbTransactions().ensureAllTables(),Duration.Inf)
+      new TestGameDbTransactions().ensureAllTables()
       Thread.sleep(5000)
   }
 
   test("ensure tables"){
-    Await.result(new TestGameDbTransactions().ensureAllTables(),Duration.Inf)
+    new TestGameDbTransactions().ensureAllTables()
     Thread.sleep(5000)
   }
 
 
   test("Get positions on no positions"){
-    val moveRank =Await.result(gameDbTransactions.checkMove(0),Duration.Inf).createMoveRank()
+    val moveRank =gameDbTransactions.checkMove(0).createMoveRank()
     assert(moveRank.isInstanceOf[NeverTried])
   }
 
   test("Get positions on a few moves"){
 
-    val moveRanksF =Seq(2, 162, 6).map(gameDbTransactions.checkMove(_)).map(_.map(_.createMoveRank()))
-    val moveRanks =Await.result(Future.sequence(moveRanksF),Duration.Inf)
+    val moveRanks =Seq(2, 162, 6).map(gameDbTransactions.checkMove(_)).map(_.createMoveRank())
     assert(moveRanks.size==3)
     moveRanks.foreach(m=>assert(m.isInstanceOf[NeverTried]))
 
@@ -55,7 +54,7 @@ class GameDBTransactionsTest   extends FunSuite with BeforeAndAfterAll{
 
   test("register loss"){
     val loss=Loss(1,1)
-    Await.result(gameDbTransactions.registerLosingPathMove(loss),Duration.Inf)
+    gameDbTransactions.registerLosingPathMove(loss)
   }
 
   test("process game at end"){
@@ -63,6 +62,6 @@ class GameDBTransactionsTest   extends FunSuite with BeforeAndAfterAll{
     val gameOutcome=lost
     val numberOfMoves=5
     val moves=Seq(Move(gameId,1,4),Move(gameId,3,20),Move(gameId,5,100))
-    val s =Await.result(gameDbTransactions.processGameAtEnd(gameId,won,5,moves),Duration.Inf)
+    val s =gameDbTransactions.processGameAtEnd(gameId,won,5,moves)
   }
 }

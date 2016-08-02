@@ -1,8 +1,6 @@
 package com.github.joeadams.service.dao
 
-
 import com.github.joeadams.service.dao.slickapi._
-
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 
@@ -13,13 +11,11 @@ import scala.concurrent.duration.Duration
   * this wrong or we're going to have a problem.
   */
 trait Transactor {
-  def transaction[R](inTransaction:DbAction=>Future[R]):Future[R]
+  def transaction[R](inTransaction:DbAction=>Future[R]):R
   def dbSource:Database
 }
 
-
 object Transactor{
-
 
   trait Default extends Transactor {
 
@@ -27,10 +23,7 @@ object Transactor{
 
     override def dbSource = Database.forConfig("conf.database")
 
-
-    override def transaction[R](inTransaction: DbAction => Future[R]): Future[R] = Future.successful(transactionBlock(inTransaction))
-
-
+    override def transaction[R](inTransaction: DbAction => Future[R]): R = transactionBlock(inTransaction)
 
     def transactionBlock[R](inTransaction: DbAction => Future[R],dbAction: DbActionWithComponents=DbActionCase()): R ={
         try {
@@ -39,6 +32,5 @@ object Transactor{
           dbAction.db.close()
         }
       }
-
   }
 }

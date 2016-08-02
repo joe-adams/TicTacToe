@@ -12,10 +12,7 @@ import scala.concurrent.duration.Duration
   */
 object DropTables extends TestGameDbTransactions{
 
-  def drop():Unit = {
-    val s: Int =Await.result(transaction(x=> db.run(sqlu"DROP ALL OBJECTS")),Duration.Inf)
-    println(s"s: $s")
-  }
+  def drop()=transaction(x=> db.run(sqlu"DROP ALL OBJECTS"))
 
 
 }

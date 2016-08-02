@@ -18,7 +18,8 @@ case class MoveHistory(moveList:Seq[GameMove], lossLevel:Option[Int], win:Boolea
     case MoveHistory(_,_,true)=>InstantWin()
     case MoveHistory(Nil,_,_)=>NeverTried()
     case MoveHistory(m,Some(x),_)=>HasLossRank(average.get,x)
-    case _ if average.get>=0=>WinDrawAverage(average.get)
+    case _ if average.get>=(1.0/moveListSampleSize*2) =>WinAverage(average.get)
+    case _ if average.get>=(-1.0/moveListSampleSize*2) =>DrawAverage(average.get)
     case _=>LoseAverage(average.get)
   }
 
@@ -27,6 +28,7 @@ case class MoveHistory(moveList:Seq[GameMove], lossLevel:Option[Int], win:Boolea
 object MoveHistory{
 
 
+  val moveListSampleSize=10
   trait MoveRank extends Ordered[MoveRank]{
     def rank:Int
     override def compare(that:MoveRank):Int=moveRankOrder.compare(this,that)
@@ -35,9 +37,10 @@ object MoveHistory{
     def average:Double
   }
 
-  case class InstantWin() extends MoveRank{ val rank=50}
-  case class WinDrawAverage(average:Double) extends MoveRank with HasAverage{ val rank=40}
-  case class NeverTried() extends MoveRank{ val rank=30}
+  case class InstantWin() extends MoveRank{ val rank=60}
+  case class WinAverage(average:Double) extends MoveRank with HasAverage{ val rank=50}
+  case class NeverTried() extends MoveRank{ val rank=40}
+  case class DrawAverage(average:Double) extends MoveRank with HasAverage{ val rank=30}
   case class LoseAverage(average:Double) extends HasAverage{ val rank=20}
   case class HasLossRank(average:Double,lossRank:Int) extends  HasAverage{ val rank=10}
 
@@ -77,7 +80,7 @@ object MoveHistory{
     remainingMoves*multiplier
   }
 
-  val moveListSampleSize=10
+
   def findAverage(moveList:Seq[GameMove]): Double ={
     val sample=moveList.take(moveListSampleSize).map(gameScore)
     sample.reduce(_+_).toDouble /sample.size
