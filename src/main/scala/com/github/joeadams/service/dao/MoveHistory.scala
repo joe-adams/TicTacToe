@@ -24,8 +24,6 @@ case class MoveHistory(moveList:Seq[GameMove], lossLevel:Option[Int], win:Boolea
 
 }
 
-
-
 object MoveHistory{
 
 

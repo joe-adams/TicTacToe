@@ -1,7 +1,6 @@
 package com.github.joeadams.service.dao
 
 import com.github.joeadams.service.GameOutcome
-import com.github.joeadams.service.dao.GameDbTransactions.default._
 import com.github.joeadams.service.dao.Tables.{Loss, Move}
 
 import scala.concurrent.Future
@@ -11,20 +10,23 @@ import scala.concurrent.Future
   * this wrong or we're going to have a problem.
   */
 trait GameDbTransactions {
-  def processGameAtEnd(gameId:Long, gameOutcome:GameOutcome, numberOfMoves:Int, moves:Seq[Move]):Seq[Any]
-  def checkMove(boardPosition:Int): MoveHistory
-  def registerLosingPathMove(loss:Loss): Int
-  def ensureAllTables():Seq[Unit]
+  def processGameAtEnd(gameId:Long, gameOutcome:GameOutcome, numberOfMoves:Int, moves:Seq[Move]):Future[Seq[Any]]
+  def checkMove(boardPosition:Int): Future[MoveHistory]
+  def registerLosingPathMove(loss:Loss): Future[Int]
+  def ensureAllTables():Future[Seq[Unit]]
 }
 
 
 
 object GameDbTransactions{
-  trait GameWithComponents extends Transactor.Default with  GameDbService.Default with GameDbTransactions{}
+  trait GameWithComponents  extends  GameDbService.Default with GameDbTransactions{
+    this:Transactor=>
+  }
 
-  def apply(): GameDbTransactions = default
 
-  object default extends GameWithComponents{
+  def apply(): GameDbTransactions = new DefaultWithTransactor
+
+  abstract class DefaultClass extends GameWithComponents with Transactor{
     override def processGameAtEnd(gameId: Long, gameOutcome: GameOutcome, numberOfMoves: Int, moves: Seq[Move]) =
       transaction(processGameAtEnd(gameId,gameOutcome,numberOfMoves,moves,_))
 
@@ -34,5 +36,7 @@ object GameDbTransactions{
 
     override def ensureAllTables()=transaction(ensureAllTables(_))
   }
+
+  class DefaultWithTransactor extends DefaultClass with Transactor.Default{}
 
 }

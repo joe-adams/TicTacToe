@@ -16,6 +16,7 @@ libraryDependencies  ++= Seq(
   "com.typesafe.slick" %% "slick-hikaricp" % "3.1.1" withSources() withJavadoc(),
   "org.scalatest" %% "scalatest" % "2.2.4" % "test" withSources() withJavadoc()
 
+
 )
 
 

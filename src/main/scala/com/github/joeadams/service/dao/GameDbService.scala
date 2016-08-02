@@ -32,7 +32,7 @@ object GameDbService {
       val moveFuture: Future[Option[Int]] = dbAction.addMoves(moves)
       val lastMove: Move = moves.last
       val outComeFuture: Future[Any] = gameOutcome match {
-        case won: COMPUTER_WON => dbAction.addWin(lastMove.newBoardPosition)
+        case won: COMPUTER_WON => addWinIfNecessary(lastMove.newBoardPosition,dbAction)
         case lost: COMPUTER_LOST => registerLosingPathMove(Loss(lastMove.newBoardPosition, 1), dbAction)
         case _: Any => Future.successful(())
       }
@@ -41,15 +41,32 @@ object GameDbService {
 
 
     override def checkMove(boardPosition: Int, dbAction: DbAction) = {
+      println(s"in checkMove boardPosition: $boardPosition")
       val moveListFuture: Future[Seq[(Game, Move)]] = dbAction.getGameMove(boardPosition)
+      println("got move list")
       val winFuture = dbAction.getWin(boardPosition)
+      println("got wins")
       val lossFuture = dbAction.getLoss(boardPosition)
-      for {
+      println("got losses")
+      val mv: Future[MoveHistory] =for {
         moveListTuple: Seq[(Game, Move)] <- moveListFuture
         win: Boolean <- winFuture
         loss: Option[Int] <- lossFuture
         moveList: Seq[GameMove] = moveListTuple.map(GameMove.tupled).sortBy(_.game.id).reverse
       } yield MoveHistory(moveList, loss, win)
+      println(s"got move history: $mv")
+      mv
+    }
+
+    private def addWinIfNecessary(board:Int, dbAction: DbAction): Future[AnyVal] ={
+      for{
+        registered: Boolean <-dbAction.getWin(board)
+        r<-if (!(registered)){
+          dbAction.addWin(board)
+        } else{
+          Future.successful(())
+        }
+      } yield r
     }
 
     override def registerLosingPathMove(loss: Loss, dbAction: DbAction) = {
@@ -63,11 +80,14 @@ object GameDbService {
     }
 
     def ensureAllTables(dbAction: DbAction) = {
-      val futures=allTheTables.map((table) => {
+      println("meh")
+      val futures=Tables.allTheTables.map((table) => {
         dbAction.getTables(table).flatMap(r => {
           if (r.isEmpty) {
+            println("hi")
             dbAction.tableCreate(table)
           } else {
+            println("yo")
             Future.successful(())
           }
         })

@@ -1,9 +1,11 @@
 package com.github.joeadams.service.dao
 
+
 import com.github.joeadams.service.dao.slickapi._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent._
 import scala.concurrent.duration.Duration
+
 
 
 /**
@@ -11,32 +13,32 @@ import scala.concurrent.duration.Duration
   * this wrong or we're going to have a problem.
   */
 trait Transactor {
-  def transaction[R](inTransaction:DbAction=>Future[R]):R
+  def transaction[R](inTransaction:DbAction=>Future[R]):Future[R]
+  def dbSource:Database
 }
 
 
 object Transactor{
-  def apply(): Transactor = new Default()
 
-  class Default extends Transactor{
-   sealed case class DbActionCase(db:Database,inner:InnerDbAction=InnerDbAction()) extends DbActionWithComponents{
-     println("DbActionCase starts existence")
-   }
-   override def transaction[R](inTransaction:DbAction=>Future[R]):R={
-     println("transactor")
-     val db=Database.forConfig("conf.database")
-     val dbActionCase=DbActionCase(db)
-     try{
-       println("yo")
-       val future: Future[R] =inTransaction(dbActionCase)
-       val result=Await.result(future,Duration.Inf)
-       println("t")
-       result
-     }catch {
-       case e:Throwable=>println(e)
-         e.printStackTrace()
-         throw e
-     } finally db.close()
-   }
+
+  trait Default extends Transactor {
+
+    sealed case class DbActionCase(db: Database=dbSource, inner: InnerDbAction = InnerDbAction()) extends DbActionWithComponents
+
+    override def dbSource = Database.forConfig("conf.database")
+
+
+    override def transaction[R](inTransaction: DbAction => Future[R]): Future[R] = Future.successful(transactionBlock(inTransaction))
+
+
+
+    def transactionBlock[R](inTransaction: DbAction => Future[R],dbAction: DbActionWithComponents=DbActionCase()): R ={
+        try {
+          Await.result(inTransaction(dbAction), Duration.Inf)
+        } finally {
+          dbAction.db.close()
+        }
+      }
+
   }
 }

@@ -23,7 +23,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
                         boardTransforms: BoardTransforms=BoardTransforms(),
-                        gameDbTransactions: GameDbTransactions=GameDbTransactions()) extends Strategy{
+                        gameDbTransactionSupplier: ()=>GameDbTransactions=GameDbTransactions.apply) extends Strategy{
+
 
 
   private val moveList = ListBuffer.empty[Move]
@@ -35,7 +36,7 @@ case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
     if (quit==outcome){
       return
     }
-    val f=gameDbTransactions.processGameAtEnd(gameId,outcome,numberOfMoves,moveList)
+    val f=gameDbTransactionSupplier().processGameAtEnd(gameId,outcome,numberOfMoves,moveList)
 
   }
 
@@ -49,20 +50,34 @@ case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
   private def findMove(board: Board): MoveResult = {
     val moves: Set[Coordinate] = board.kv.filter(_.s==blank).map(_.c).toSet
     val minBoardsWithMoves: Map[Int, Set[Coordinate]] =moves.groupBy(move=>minBoardAfterMove(board,move))
-    val boards: Set[Int] =minBoardsWithMoves.keySet
-    val boardsToRanks: Map[Int, MoveRank] = boards.groupBy(identity).mapValues(_.head).mapValues(rankMove)
+    val boards =minBoardsWithMoves.keySet.toSeq
+    println(s"boards $boards")
+    val boardsToRanks: Map[Int, MoveRank] = boards.map(boardAndRank).toMap
+    println(s"boardsToRank $boardsToRanks")
 
-    handlePossibleNeedToAddLossRank(boardsToRanks.values.toSeq,moveList.last.newBoardPosition)
+    //if (moveList.size>0) handlePossibleNeedToAddLossRank(boardsToRanks.values.toSeq,moveList.last.newBoardPosition)
 
+
+    println("handled loss rank")
     val boardPicked: Int =boardsToRanks.maxBy(_._2)._1
+    println(s"picked: $boardPicked")
     val setOfMoves: Set[Coordinate] =minBoardsWithMoves(boardPicked)
+    println(s"set of moves: $setOfMoves")
     val moveCoordinate: Coordinate =pickOneRandomly(setOfMoves.toSeq)
     val moveNumber=10-moves.size
     val moveRecord=Move(gameId,moveNumber,boardPicked)
     MoveResult(moveCoordinate,moveRecord)
   }
 
-  private def rankMove(board:Int)= gameDbTransactions.checkMove(board).createMoveRank()
+  def boardAndRank(board:Int):(Int,MoveRank)={
+    val b=board
+    println(s"boardAndRank $b")
+    val r: MoveRank =rankMove(b)
+    println(s"leaving boardAndRank $r")
+    (b,r)
+  }
+
+  private def rankMove(board:Int)= Await.result(gameDbTransactionSupplier().checkMove(board),Duration.Inf).createMoveRank()
   private def minBoardAfterMove(board:Board,move:Coordinate): Int = boardTransforms.minimumBoardRepresentations(board + (move->computerIs))
 
   private def handlePossibleNeedToAddLossRank(moveRanks: Seq[MoveRank],lastBoard:Int)={
@@ -78,7 +93,7 @@ case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
     case _=>None
   }
 
-  private def addLossRank(loss:Loss):Unit=gameDbTransactions.registerLosingPathMove(loss)
+  private def addLossRank(loss:Loss):Unit=gameDbTransactionSupplier().registerLosingPathMove(loss)
 
   private def optionalLossRankForMove(moves:Seq[MoveRank]):Option[Int]={
     val lossRanksOpt=moves.map(lossRank)

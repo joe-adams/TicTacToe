@@ -3,6 +3,7 @@ package com.github.joeadams.ui
 import javafx.event.EventHandler
 import javafx.stage.WindowEvent
 
+import scala.concurrent.{Future, Promise}
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Pos
 import scalafx.scene.Scene
@@ -17,6 +18,8 @@ import scalafx.scene.text.{Font, Text, TextAlignment}
   */
 object Stage extends PrimaryStage {
 
+  private val shownPromise=Promise[Unit]
+  val shownFuture=shownPromise.future
   height = 800
   width = 600
   scene = new Scene {

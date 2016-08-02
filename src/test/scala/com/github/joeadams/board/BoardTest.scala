@@ -9,7 +9,7 @@ import com.github.joeadams.service._
   * The files look weird if this is blank.  Important company owns this code. Don't format
   * this wrong or we're going to have a problem.
   */
-class BoardTest  extends FunSuite with BeforeAndAfter with ScalaFutures {
+class BoardTest  extends FunSuite with BeforeAndAfter {
 
   test("Board converts to number"){
     val map=Map(Coordinate(0,0)->X)

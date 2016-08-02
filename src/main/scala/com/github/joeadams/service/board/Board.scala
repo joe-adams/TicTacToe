@@ -24,8 +24,6 @@ object Board {
     case i if i == 0 => blank
   }
 
-
-
   sealed case class Board(map:Map[Coordinate, SquareMarking]) {
 
     def transform(f:Board=>Board):Board=f(this)
@@ -50,7 +48,7 @@ object Board {
 
 
 
-    def asString:String={
+    override def toString():String={
       Coordinate.yRange.map(y=>{
         Coordinate.xRange.map(x=>map(x,y)).mkString("|")
       }).mkString("\n")

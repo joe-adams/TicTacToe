@@ -37,17 +37,10 @@ object InnerDbAction{
 
   def apply(): InnerDbAction =default
 
-
   object default extends InnerDbAction{
     override def getGameMove(boardPosition:Int) = games.join(moves).on(_.id === _.gameId).filter(_._2.newBoardPosition===boardPosition).sortBy(_._1.id.desc).result
 
-    override def getLoss(boardPosition:Int) = {
-      println("get loss")
-      val l =losses.filter(_.position === boardPosition).map(_.level).result
-      println(s"loss $l")
-      println("got loss")
-      l
-    }
+    override def getLoss(boardPosition:Int) = losses.filter(_.position === boardPosition).map(_.level).result
 
     override def getWin(boardPosition:Int) = wins.filter(_.position===boardPosition).max.isDefined.result
 
@@ -57,21 +50,9 @@ object InnerDbAction{
 
     override def addWin(win:Int)=wins+=win
 
-    override def addLoss(loss:Loss) ={
-      println("add loss")
-      val a=losses+=loss
-      println("added")
-      a
-    }
+    override def addLoss(loss:Loss) =losses+=loss
 
-    override def updateLossIfToLowerLevel(loss:Loss)={
-      println("update")
-      val existingRecord =losses.filter(_.position===loss.position).filter(_.level>loss.level).map(_.level)
-      println("exist")
-      val a=existingRecord.update(loss.level)
-      println("updated")
-      a
-    }
+    override def updateLossIfToLowerLevel(loss:Loss)=losses.filter(_.position===loss.position).filter(_.level>loss.level).map(_.level).update(loss.level)
 
     override def getTables(table:TableQuery[_ <: Table[_]]) = MTable.getTables(table.baseTableRow.tableName)
 
