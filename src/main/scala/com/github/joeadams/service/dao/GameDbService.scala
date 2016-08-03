@@ -1,18 +1,12 @@
 package com.github.joeadams.service.dao
 
-import com.github.joeadams.service.dao.slickapi._
 import com.github.joeadams.service._
 import com.github.joeadams.service.dao.Tables._
-import com.github.joeadams.service.dao._
-
+import com.github.joeadams.service.dao.slickapi._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 trait GameDbService {
   def processGameAtEnd(gameId:Long, gameOutcome:GameOutcome, numberOfMoves:Int, moves:Seq[Move],dbAction: DbAction):Future[Any]
   def checkMove(boardPosition:Int,dbAction: DbAction): Future[MoveHistory]
@@ -22,7 +16,6 @@ trait GameDbService {
 }
 
 object GameDbService {
-
 
   trait Default extends GameDbService {
     override def processGameAtEnd(gameId: Long, gameOutcome: GameOutcome, numberOfMoves: Int, moves: Seq[Move], dbAction: DbAction) = {
@@ -37,7 +30,6 @@ object GameDbService {
       }
       Future.sequence(Seq(gameFuture, moveFuture, outComeFuture))
     }
-
 
     override def checkMove(boardPosition: Int, dbAction: DbAction) = {
       val moveListFuture: Future[Seq[(Game, Move)]] = dbAction.getGameMove(boardPosition)
@@ -72,14 +64,9 @@ object GameDbService {
       } yield result
     }
 
-
     override def ensureAllTables(dbAction: DbAction) = Future.sequence(Tables.allTheTables.map(t=>ensureATable(t, dbAction)))
-
 
     private def ensureATable(table: TableQuery[_ <: Table[_]], dbAction: DbAction): Future[Unit] =
       dbAction.getTables(table).flatMap(r=>{if (r.isEmpty) dbAction.tableCreate(table) else Future.successful(())})
-
-
   }
-
 }

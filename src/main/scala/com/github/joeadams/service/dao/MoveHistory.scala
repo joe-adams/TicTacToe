@@ -1,15 +1,11 @@
 package com.github.joeadams.service.dao
 
-import com.github.joeadams.service.dao.Tables.GameMove
 import com.github.joeadams.service._
 import com.github.joeadams.service.dao.MoveHistory.{MoveRank, _}
+import com.github.joeadams.service.dao.Tables.GameMove
 
 import scala.reflect.ClassTag
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 case class MoveHistory(moveList:Seq[GameMove], lossLevel:Option[Int], win:Boolean) {
 
   lazy val average=if(moveList.isEmpty) None else Some(findAverage(moveList))
@@ -26,7 +22,6 @@ case class MoveHistory(moveList:Seq[GameMove], lossLevel:Option[Int], win:Boolea
 }
 
 object MoveHistory{
-
 
   val moveListSampleSize=10
   trait MoveRank extends Ordered[MoveRank]{

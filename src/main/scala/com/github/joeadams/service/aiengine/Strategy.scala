@@ -2,13 +2,9 @@ package com.github.joeadams.service.aiengine
 
 import com.github.joeadams.service._
 import com.github.joeadams.service.board.Board.Board
-import com.github.joeadams.service.board.{BoardTransforms, Coordinate}
-import com.github.joeadams.service.dao.{DbAction, GameDbService}
+import com.github.joeadams.service.board.Coordinate
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
+
 trait Strategy {
   def move(board: Board): Coordinate
 

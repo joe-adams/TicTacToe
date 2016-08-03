@@ -8,10 +8,7 @@ import rx.lang.scala.subjects.PublishSubject
 
 import scalafx.scene.control.Button
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
+
 
 trait ObserveButton {
   def observe[ID](button: Button, id: ID): Observable[ID]

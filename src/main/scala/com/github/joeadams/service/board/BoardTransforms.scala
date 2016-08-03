@@ -3,11 +3,6 @@ package com.github.joeadams.service.board
 import breeze.linalg.Matrix
 import com.github.joeadams.service.board.Board._
 
-
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 trait BoardTransforms {
   type BoardFlip=Matrix[Int]
 
@@ -16,7 +11,6 @@ trait BoardTransforms {
   def flipBoard(board: Board,boardFlip: BoardFlip): Board
 
   def minimumBoardRepresentations(board: Board): Int
-
 
 }
 

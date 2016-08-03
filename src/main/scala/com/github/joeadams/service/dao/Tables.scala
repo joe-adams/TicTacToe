@@ -1,15 +1,9 @@
 package com.github.joeadams.service.dao
 
-
+import slick.lifted.ProvenShape
 import com.github.joeadams.service.dao.slickapi._
-import slick.lifted.{ForeignKeyQuery, ProvenShape}
 import com.github.joeadams.service._
 
-
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 object Tables {
   case class GameMove(game:Game,move:Move)
 
@@ -23,7 +17,6 @@ object Tables {
     def * : ProvenShape[Game]=(id,outcomeString,numberOfMoves) <>(Game.tupled, Game.unapply)
   }
   val games= TableQuery[Games]
-
 
   case class Move(gameId:Long,moveNumber:Int,newBoardPosition:Int)
   class Moves(tag:Tag) extends Table[Move](tag,"MOVE"){
@@ -50,6 +43,5 @@ object Tables {
   val wins=TableQuery[Wins]
 
   val allTheTables:Seq[TableQuery[_<:Table[_]]]=Seq(games,moves,losses,wins)
-
 
 }

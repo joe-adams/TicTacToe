@@ -1,18 +1,11 @@
 package com.github.joeadams.service.dao
 
-
-import com.github.joeadams.service.dao.slickapi._
-import slick.profile.{FixedSqlAction, FixedSqlStreamingAction}
 import com.github.joeadams.service.dao.Tables._
+import com.github.joeadams.service.dao.slickapi._
 import slick.jdbc.meta.MTable
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 trait DbAction {
   def getGameMove(boardPosition: Int): Future[Seq[(Game, Move)]]
 
@@ -36,8 +29,6 @@ trait DbAction {
 
 }
 
-
-
 trait DbActionWithComponents extends DbAction{
 
   def db:Database
@@ -60,7 +51,6 @@ trait DbActionWithComponents extends DbAction{
   override def addMoves(newMoves: Seq[Move]) = db.run(inner.addMoves(newMoves))
 
   override def getTables(table: TableQuery[_<:Table[_]]) = db.run(inner.getTables(table))
-
 
   override def tableCreate(table:TableQuery[_<:Table[_]])=db.run(table.schema.create)
 }

@@ -3,26 +3,20 @@ package com.github.joeadams.service.dao
 import com.github.joeadams.service.GameOutcome
 import com.github.joeadams.service.dao.Tables.{Loss, Move}
 
-import scala.concurrent.Future
-
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 trait GameDbTransactions {
-  def processGameAtEnd(gameId:Long, gameOutcome:GameOutcome, numberOfMoves:Int, moves:Seq[Move]):Any
-  def checkMove(boardPosition:Int): MoveHistory
-  def registerLosingPathMove(loss:Loss): Int
-  def ensureAllTables():Any
+  def processGameAtEnd(gameId: Long, gameOutcome: GameOutcome, numberOfMoves: Int, moves: Seq[Move]): Any
+
+  def checkMove(boardPosition: Int): MoveHistory
+
+  def registerLosingPathMove(loss: Loss): Int
+
+  def ensureAllTables(): Any
 }
-
-
 
 object GameDbTransactions{
   trait GameWithComponents  extends  GameDbService.Default with GameDbTransactions{
     this:Transactor=>
   }
-
 
   def apply(): GameDbTransactions = new DefaultWithTransactor
 

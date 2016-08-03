@@ -1,24 +1,16 @@
 package com.github.joeadams.service.aiengine
 
-
-
 import com.github.joeadams.service._
 import com.github.joeadams.service.board.Board._
 import com.github.joeadams.service.board._
+import com.github.joeadams.service.dao.GameDbTransactions
 import com.github.joeadams.service.dao.MoveHistory.{HasLossRank, MoveRank}
 import com.github.joeadams.service.dao.Tables._
-import com.github.joeadams.service.dao.GameDbTransactions
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import scala.util.Random
 import scala.language.implicitConversions
+import scala.util.Random
 
-/*
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 case class StrategyImpl(gameId: Long, computerIs: X_OR_O,
                         boardTransforms: BoardTransforms=BoardTransforms(),
                         gameDbTransactionSupplier: ()=>GameDbTransactions=GameDbTransactions.apply) extends Strategy{

@@ -4,11 +4,6 @@ import breeze.linalg.Matrix
 
 import scala.collection.immutable.ListMap
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
-
 case class Coordinate(x: Int, y: Int) extends Ordered[Coordinate] {
 
   val id = ((y + 1) * 3) + (x + 1)

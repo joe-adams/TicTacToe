@@ -9,10 +9,7 @@ import scalafx.scene.layout.{ColumnConstraints, GridPane, Priority, RowConstrain
 import scalafx.scene.paint.Color
 import scalafx.scene.text.Font
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
+
 object BoardUI extends GridPane {
   opacity = 1
   val columnConstraint = new ColumnConstraints() {

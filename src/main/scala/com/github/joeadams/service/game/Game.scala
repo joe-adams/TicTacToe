@@ -12,26 +12,21 @@ import rx.lang.scala.Subscription
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 
-
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 class Game(playerIs: X_OR_O) {
 
   private val id: Long = ZonedDateTime.now().toEpochSecond
   private val computerIs = if (playerIs == X) O else X
   private val computerPlayer = new StrategyImpl(id,computerIs)
-  private val board: mutable.Map[Coordinate, SquareMarking] = Board.blankBoard.mutable
+  private val board = Board.blankBoard.mutable
   private val clickSubscription: Subscription = ObserveBoardAsCoordinates.observe.filter(letPlayerMove).subscribe(onHumanMove(_))
   private val areWePlayingSubscription: Subscription = AreWePlayingState.subject.subscribe((areWePlaying: AreWePlaying) => areWePlaying match {
     case no: NO => handleFinishedGame(quit)
-    case _ => {}
+    case _ => ()
   })
   private val subscriptions = Seq(clickSubscription, areWePlayingSubscription)
-  private def letPlayerMove(coordinate: Coordinate): Boolean = (board.get(coordinate).get == blank)
+  private def letPlayerMove(coordinate: Coordinate): Boolean = board(coordinate)==blank
   private def onHumanMove(coordinate: Coordinate) = moveHandler(playerIs, coordinate)
-  private def afterMove(): Boolean = moveOutcome() match {
+  private def afterMove() = moveOutcome() match {
       case gameOutcome: GameOutcome => {
         handleFinishedGame(gameOutcome)
         true
@@ -39,22 +34,20 @@ class Game(playerIs: X_OR_O) {
       case _ => false
     }
 
-  private def handleComputerMove(playerMove: Option[Coordinate]): Unit = {
-    val coordinate = computerPlayer.move(board.toMap)
+  private def handleComputerMove() = {
+    val coordinate = computerPlayer.move(board)
     moveHandler(computerIs, coordinate)
   }
 
-  private def moveHandler(p: X_OR_O, coordinate: Coordinate) = {
+  private def moveHandler(p: X_OR_O, coordinate: Coordinate):Unit = {
     board.put(coordinate, p)
     UpdateBoard.move(coordinate,p)
     val gameOver = afterMove()
-    if (!gameOver && (playerIs == p)) {
-      handleComputerMove(Some(coordinate))
-    }
+    if (!gameOver && (playerIs == p)) handleComputerMove()
   }
 
-  private def handleFinishedGame(gameOutcome: GameOutcome): Unit = {
-    subscriptions.foreach(s => s.unsubscribe())
+  private def handleFinishedGame(gameOutcome: GameOutcome) = {
+    subscriptions.foreach(_.unsubscribe())
     endPopup(gameOutcome)
     AreWePlayingState.subject.onNext(no)
     computerPlayer.processGameOutcome(id, gameOutcome, numberOfMoves())
@@ -70,41 +63,32 @@ class Game(playerIs: X_OR_O) {
     popup(popupText)
   }
 
-  private def playerWon(p: X_OR_O) = Game.playerWon(p,board.toMap)
-  private def numberOfMoves()=Game.numberOfMoves(board.toMap)
+  private def playerWon(p: X_OR_O) = Game.playerWon(p,board)
+  private def numberOfMoves()=Game.numberOfMoves(board)
 
-  private def moveOutcome():MoveOutcome= () match {
+  private def moveOutcome()= () match {
     case _ if playerWon(computerIs) =>won
     case _ if playerWon(playerIs) => lost
-    case _ if board.values.exists(_ == blank) => stillGoing
+    case _ if board.s.exists(_ == blank) => stillGoing
     case _ => draw
   }
 
-
-  def init()={
-    UpdateBoard.clearBoard()
-    if (computerIs == X) {
-      handleComputerMove(Option.empty)
-    }
-  }
-
-  init()
+  UpdateBoard.clearBoard()
+  if (computerIs == X) handleComputerMove()
 }
 
 object Game {
-  def allWinningCombosFactory(): Set[Set[Coordinate]] = {
-    val allRows: IndexedSeq[Set[Coordinate]] = Coordinate.yRange.map(n => Coordinate.allCoordinates.filter(c => c.y == n))
-    val allColumns: IndexedSeq[Set[Coordinate]] = Coordinate.xRange.map(n => Coordinate.allCoordinates.filter(c => c.x == n))
+  def allWinningCombosFactory()={
+    val allRows = Coordinate.yRange.map(n => Coordinate.allCoordinates.filter(_.y == n))
+    val allColumns = Coordinate.xRange.map(n => Coordinate.allCoordinates.filter(_.x == n))
     val diagonal = Set(Coordinate(1, 1), Coordinate(0, 0), Coordinate(-1, -1))
     val reverseDigonal = Set(Coordinate(1, -1), Coordinate(0, 0), Coordinate(-1, 1))
-    val answerInWrongType = allRows ++ allColumns :+ diagonal :+ reverseDigonal
-    answerInWrongType.toSet
+    (allRows ++ allColumns :+ diagonal :+ reverseDigonal).toSet
   }
   val allWinningCombos = allWinningCombosFactory
-  def playerWon(p: X_OR_O, board: Board) = Game.allWinningCombos.exists(squares => playerWonOnASetOfSquares(p, squares,board))
-  def playerWonOnASetOfSquares(p: X_OR_O, squares: Set[Coordinate], board: Board): Boolean = squares.forall(board.map(_)==p)
+  def playerWonOnASetOfSquares(p: X_OR_O, squares: Set[Coordinate], board: Board) = squares.forall(board.map(_)==p)
+  def playerWon(p: X_OR_O, board: Board) = allWinningCombos.exists(playerWonOnASetOfSquares(p,_,board))
   def numberOfMoves(board: Board): Int = board.s.filter(_!= blank).size
-
 }
 
 

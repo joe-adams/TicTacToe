@@ -10,10 +10,7 @@ import scalafx.scene.shape.Rectangle
 import scalafx.stage.Popup
 
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
+
 object PopupHelper {
   def popup(popupText: String) = {
     val p = new Popup {

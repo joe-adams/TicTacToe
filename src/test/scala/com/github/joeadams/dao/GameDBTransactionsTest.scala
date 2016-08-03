@@ -1,24 +1,12 @@
 package com.github.joeadams.dao
 
 
-import com.github.joeadams.service.dao.{GameDbTransactions, MoveHistory}
-import com.github.joeadams.service.dao.MoveHistory.{HasLossRank, MoveRank, NeverTried}
-import com.github.joeadams.service.dao.Tables.{Loss, Move}
 import com.github.joeadams.service._
+import com.github.joeadams.service.dao.MoveHistory.NeverTried
+import com.github.joeadams.service.dao.Tables.{Loss, Move}
 import org.scalatest._
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Seconds, Span}
-import com.github.joeadams.service.dao.slickapi._
-import slick.jdbc.meta._
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
 
 
 

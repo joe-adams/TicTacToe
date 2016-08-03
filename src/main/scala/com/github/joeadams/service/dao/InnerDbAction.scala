@@ -1,16 +1,13 @@
 package com.github.joeadams.service.dao
 
 import com.github.joeadams.service.dao.Tables._
+import com.github.joeadams.service.dao.slickapi._
 import slick.dbio.Effect._
 import slick.dbio.NoStream
-import slick.profile.{FixedSqlAction, FixedSqlStreamingAction, _}
-import com.github.joeadams.service.dao.slickapi._
 import slick.jdbc.meta.MTable
+import slick.profile.{FixedSqlAction, FixedSqlStreamingAction, _}
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
+
 trait InnerDbAction {
   def getGameMove(boardPosition: Int): FixedSqlStreamingAction[Seq[(Game, Move)], (Game, Move), Read]
 

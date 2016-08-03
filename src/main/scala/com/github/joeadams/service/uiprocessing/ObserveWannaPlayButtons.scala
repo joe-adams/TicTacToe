@@ -5,10 +5,7 @@ import com.github.joeadams.ui.WannaPlay
 import rx.lang.scala.Observable
 
 
-/**
-  * The files look weird if this is blank.  Important company owns this code. Don't format
-  * this wrong or we're going to have a problem.
-  */
+
 trait ObserveWannaPlayButtons {
 
   def observe: Observable[WannaPlayEnum.Value]
